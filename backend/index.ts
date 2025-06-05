@@ -15,11 +15,6 @@ app.use(express.json());
 // Routes
 app.use("/api/v1", clientRoutes);
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("API is running 🚀");
-});
-
 app.listen(PORT, () => {
   console.log(`🚀 Server ready at http://localhost:${PORT}`);
 });

@@ -14,16 +14,34 @@ datasource db {
 }
 
 model User {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  email           String   @unique
+  firstName       String
+  lastName        String
+  username        String   @unique
+  password        String
+  role            Role     @default(USER)
+  firstConnection Boolean  @default(true)
+}
+
+model Client {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   email     String   @unique
-  firstName String?
-  lastName  String?
-  username  String
-  role      Role     @default(USER)
+  phone     String   @unique
+  firstName String
+  lastName  String
+  status    Status   @default(active)
 }
 
 enum Role {
   USER
   ADMIN
+}
+
+enum Status {
+  active
+  inactive
+  prospect
 }
