@@ -3,7 +3,7 @@ import prisma from "../prisma";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-const salt = await bcrypt.genSalt(10);
+const salt = 10;
 
 module.exports.createUser = async (req: Request, res: Response) => {
   try {
@@ -14,7 +14,7 @@ module.exports.createUser = async (req: Request, res: Response) => {
     const newUser = await prisma.user.upsert({
       where: { email },
       update: {},
-      create: { firstName, username, lastName, email }, // pour test : userId en dur
+      create: { firstName, username, lastName, email, password },
     });
     res.json(newUser);
   } catch (error) {
@@ -25,20 +25,31 @@ module.exports.createUser = async (req: Request, res: Response) => {
 
 module.exports.userLogin = async (req: Request, res: Response) => {
   const { username, password } = req.body;
+
+  if (!username || !password)
+    return res.status(400).json({ message: "Need username and password" });
+
   try {
     const user = await prisma.user.findUnique({
       where: {
-        username: username,
+        username,
       },
-      x,
     });
-    if (user) {
-      const comparedPassword = bcrypt.compare(password, user.password);
-    }
+    if (!user)
+      return res
+        .status(401)
+        .json({ valid: false, message: "User or password incorrect" });
+
+    const comparedPassword = await bcrypt.compare(password, user.password);
+    if (!comparedPassword)
+      return res
+        .status(401)
+        .json({ valid: false, message: "User or password incorrect" });
+
     res.status(200).json({ valid: true, user: username });
   } catch (error) {
     console.error(error);
-    res.status(403).send(`No user named ${username}`);
+    return res.status(500).send("Internal server error");
   }
 };
 
