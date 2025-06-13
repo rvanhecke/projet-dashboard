@@ -25,6 +25,8 @@ module.exports.createUser = async (req: Request, res: Response) => {
 
 module.exports.userLogin = async (req: Request, res: Response) => {
   const { username, password } = req.body;
+  const maxAge = 8 * 60 * 60 * 1000;
+  const secret = process.env.JWT_SECRET;
 
   if (!username || !password)
     return res.status(400).json({ message: "Need username and password" });
@@ -46,7 +48,23 @@ module.exports.userLogin = async (req: Request, res: Response) => {
         .status(401)
         .json({ valid: false, message: "User or password incorrect" });
 
-    res.status(200).json({ valid: true, user: username });
+    if (!secret)
+      return res.status(500).json({ message: "Internal server error" });
+
+    const jwtCookie = jwt.sign(
+      {
+        user: username,
+        id: user.id,
+        role: user.role,
+        firstConnection: user.firstConnection,
+      },
+      secret,
+      { expiresIn: maxAge }
+    );
+    res
+      .cookie("jwt", jwtCookie, { httpOnly: true, sameSite: "strict", maxAge })
+      .status(200)
+      .json({ valid: true, user: username });
   } catch (error) {
     console.error(error);
     return res.status(500).send("Internal server error");
